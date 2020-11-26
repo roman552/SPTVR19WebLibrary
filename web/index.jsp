@@ -16,6 +16,7 @@
         <p>${info}</p>
         <br>
         <a href="addBook">Добавить новую книгу</a>
+        <a href="addReader">Добавить читателя</a>
         
     </body>
 </html>

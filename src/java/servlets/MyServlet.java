@@ -5,13 +5,17 @@
  */
 package servlets;
 
+import entity.Book;
+import entity.Reader;
 import java.io.IOException;
-import java.io.PrintWriter;
+import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import session.BookFacade;
+import session.ReaderFacade;
 
 /**
  *
@@ -19,9 +23,15 @@ import javax.servlet.http.HttpServletResponse;
  */
 @WebServlet(name = "MyServlet", urlPatterns = {
     "/addBook",
-    "/createBook"
+    "/createBook",
+    "/addReader",
+    "/createReader"
 })
 public class MyServlet extends HttpServlet {
+    @EJB 
+    private BookFacade bookFacade;
+    @EJB 
+    private ReaderFacade readerFacade;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -46,11 +56,41 @@ public class MyServlet extends HttpServlet {
                 String name = request.getParameter("name");
                 String author = request.getParameter("author");
                 String publishedYear = request.getParameter("publishedYear");
-                request.setAttribute("info", 
-                        "Данные из формы получены: название книги "+name+
-                        " автор: "+author+
-                        " год издания "+publishedYear
-                );
+                if("".equals(name) || name == null 
+                        || "".equals(author) || author == null
+                        || "".equals(publishedYear) || publishedYear == null){
+                    request.setAttribute("info","Заполните все поля формы");
+                    request.setAttribute("name",name);
+                    request.setAttribute("author",author);
+                    request.setAttribute("publishedYear",publishedYear);
+                    request.getRequestDispatcher("/WEB-INF/addBookForm.jsp").forward(request, response);
+                    break; 
+                }
+                Book book = new Book(name, author, Integer.parseInt(publishedYear));
+                bookFacade.create(book);
+                request.setAttribute("info","Добавлена книга: " +book.toString() );
+                request.getRequestDispatcher("/index.jsp").forward(request, response);
+                break;
+            case "/addReader":
+                request.getRequestDispatcher("/WEB-INF/addReaderForm.jsp").forward(request, response);
+                break;
+            case "/createReader":
+                name = request.getParameter("name");
+                String lastname = request.getParameter("lastname");
+                String phone = request.getParameter("phone");
+                if("".equals(name) || name == null 
+                        || "".equals(lastname) || lastname == null
+                        || "".equals(phone) || phone == null){
+                    request.setAttribute("info","Заполните все поля формы");
+                    request.setAttribute("name",name);
+                    request.setAttribute("lastname",lastname);
+                    request.setAttribute("phone",phone);
+                    request.getRequestDispatcher("/WEB-INF/addReaderForm.jsp").forward(request, response);
+                    break; 
+                }
+                Reader reader= new Reader(name, lastname, phone);
+                readerFacade.create(reader);
+                request.setAttribute("info","Добавлена читатель: " +reader.toString() );
                 request.getRequestDispatcher("/index.jsp").forward(request, response);
                 break;
             

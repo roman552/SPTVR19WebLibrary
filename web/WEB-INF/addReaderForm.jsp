@@ -12,11 +12,11 @@
         <title>JSP Page</title>
     </head>
     <body>
-        <h1>Добавить книгу</h1>
-        <form action="createBook" method="POST">
-            Название книги: <input type="text" name="name" value="${name}"><br>
-            Автор книги: <input type="text" name="author" value="${author}"><br>
-            Год издания книги: <input type="text" name="publishedYear" value="${publishedYear}"><br>
+        <h1>Добавить читателя</h1>
+        <form action="createReader" method="POST">
+            Имя: <input type="text" name="name" value="${name}"><br>
+            Фамилия: <input type="text" name="lastname" value="${lastname}"><br>
+            Телефон: <input type="text" name="phone" value="${phone}"><br>
            <input type="submit" name="submit" value="Отправить"><br>
         </form>
     </body>
