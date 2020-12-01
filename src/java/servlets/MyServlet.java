@@ -8,6 +8,7 @@ package servlets;
 import entity.Book;
 import entity.Reader;
 import java.io.IOException;
+import java.util.List;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -25,7 +26,9 @@ import session.ReaderFacade;
     "/addBook",
     "/createBook",
     "/addReader",
-    "/createReader"
+    "/createReader",
+    "/listBooks",
+    
 })
 public class MyServlet extends HttpServlet {
     @EJB 
@@ -93,6 +96,11 @@ public class MyServlet extends HttpServlet {
                 request.setAttribute("info","Добавлена читатель: " +reader.toString() );
                 request.getRequestDispatcher("/index.jsp").forward(request, response);
                 break;
+             case "/listBooks":
+                List<Book> listBooks = bookFacade.findAll();
+                request.setAttribute("listBooks", listBooks);
+                request.getRequestDispatcher("/WEB-INF/listBooks.jsp").forward(request, response);
+                break;    
             
         }
     }
