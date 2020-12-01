@@ -9,7 +9,7 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
+        <title>Добавить книгу</title>
     </head>
     <body>
         <h1>Добавить книгу</h1>

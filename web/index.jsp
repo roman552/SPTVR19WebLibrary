@@ -9,15 +9,17 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
+        <title>Наша библиотека</title>
     </head>
     <body>
-        <div>Наша библиотека</div>
+        <div><h1>Наша библиотека</h1></div>
         <p>${info}</p>
         <br>
-        <a href="addBook">Добавить новую книгу</a>
-        <a href="addReader">Добавить читателя</a>
-        <a href="listBooks">Список книг</a>
+        <a href="addBook">Добавить новую книгу</a><br>
+        <a href="addReader">Добавить читателя</a><br>
+        <a href="listBooks">Список книг</a><br>
+        <a href="listReaders">Список читателей</a><br>
+        <a href="giveBookToReader">Выдать книгу читателю</a><br>
         
     </body>
 </html>
