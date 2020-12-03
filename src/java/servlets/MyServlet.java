@@ -6,8 +6,10 @@
 package servlets;
 
 import entity.Book;
+import entity.History;
 import entity.Reader;
 import java.io.IOException;
+import java.util.GregorianCalendar;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
@@ -16,6 +18,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import session.BookFacade;
+import session.HistoryFacade;
 import session.ReaderFacade;
 
 /**
@@ -30,6 +33,8 @@ import session.ReaderFacade;
     "/listBooks",
     "/listReaders",
     "/giveBookToReader",
+    "/giveBook",
+    
     
 })
 public class MyServlet extends HttpServlet {
@@ -37,6 +42,8 @@ public class MyServlet extends HttpServlet {
     private BookFacade bookFacade;
     @EJB 
     private ReaderFacade readerFacade;
+    @EJB 
+    private HistoryFacade historyFacade;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -109,7 +116,22 @@ public class MyServlet extends HttpServlet {
                 request.getRequestDispatcher("/WEB-INF/listReaders.jsp").forward(request, response);
                 break;    
              case "/giveBookToReader":
-                 
+                listReaders = readerFacade.findAll();
+                request.setAttribute("listReaders", listReaders);
+                listBooks = bookFacade.findAll();
+                request.setAttribute("listBooks", listBooks);
+                request.getRequestDispatcher("/WEB-INF/giveBookToReader.jsp").forward(request, response);
+                break;
+             case "/giveBook":
+                String bookId = request.getParameter("bookId");
+                book = bookFacade.find(Long.parseLong(bookId));
+                String readerId = request.getParameter("readerId");
+                reader = readerFacade.find(Long.parseLong(readerId));
+                History history = new History(book, reader, new GregorianCalendar().getTime(), null);
+                historyFacade.create(history);
+                request.setAttribute("info","Книга выдана");
+                request.getRequestDispatcher("/index.jsp").forward(request, response);
+                break;
         }
     }
 
