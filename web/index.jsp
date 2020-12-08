@@ -20,6 +20,7 @@
         <a href="listBooks">Список книг</a><br>
         <a href="listReaders">Список читателей</a><br>
         <a href="giveBookToReader">Выдать книгу читателю</a><br>
+        <a href="returnBookToLibrary">Вернуть книгу в библиотеку</a><br>
         
     </body>
 </html>
