@@ -13,6 +13,7 @@
     </head>
     <body>
         <h1>Выдать книгу читателю</h1>
+        <p>${info}</p>
         <form action="giveBook" method="POST">
         <select name="bookId">
                 <option value="">выберите книгу</option>
@@ -20,12 +21,7 @@
                     <option value="${book.id}">"${book.name}". ${book.author}. ${book.publishedYear} </option>
                 </c:forEach>
             </select>   
-        <select name="readerId">
-                <option value="">выберите книгу</option>
-                <c:forEach var="reader" items="${listReaders}">
-                     <option value="${reader.id}">"${reader.name}". ${reader.lastname}. ${reader.phone} </option>
-                </c:forEach>
-        </select>   
+          
         <br>
         <input type="submit" value="Выдать книгу">
         </form>
