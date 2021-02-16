@@ -6,10 +6,10 @@
 package servlets;
 
 import entity.Book;
+import entity.Cover;
 import entity.Reader;
 import entity.User;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
@@ -19,22 +19,37 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import session.BookFacade;
+import session.CoverFacade;
+import session.HistoryFacade;
 import session.ReaderFacade;
+import session.UserFacade;
+import session.UserRolesFacade;
 
 /**
  *
- * @author A
+ * @author jvm
  */
 @WebServlet(name = "ManagerServlet", urlPatterns = {
     "/addBook",
     "/createBook",
-    "/listReaders",
+    "/editBookForm",
+    "/editBook",
+    "/uploadForm",
+    
+    
+
 })
 public class ManagerServlet extends HttpServlet {
     @EJB 
     private BookFacade bookFacade;
     @EJB 
     private ReaderFacade readerFacade;
+    @EJB
+    private HistoryFacade historyFacade;
+    @EJB
+    private UserFacade userFacade;
+    @EJB private UserRolesFacade userRolesFacade;
+    @EJB private CoverFacade coverFacade;
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -47,57 +62,90 @@ public class ManagerServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
-        if (session == null) {
-            request.getRequestDispatcher("/WEB-INF/showLoginForm.jsp").forward(request, response);
-            request.setAttribute("info", "Войдите в систему");
+        if(session == null){
+            request.setAttribute("info", "У вас нет права для этого ресурса. Войдите в систему");
+            request.getRequestDispatcher("/showLoginForm").forward(request, response);
             return;
         }
         User user = (User) session.getAttribute("user");
-        if (user==null) {
-            request.getRequestDispatcher("/WEB-INF/showLoginForm.jsp").forward(request, response);
-            request.setAttribute("info", "Войдите в систему");
+        if(user == null){
+            request.setAttribute("info", "У вас нет права для этого ресурса. Войдите в систему");
+            request.getRequestDispatcher("/showLoginForm").forward(request, response);
             return;
         }
-        
-        if (!"manager".equals(user.getLogin())) {
-            request.getRequestDispatcher("/WEB-INF/showLoginForm.jsp").forward(request, response);
-            request.setAttribute("info", "Войдите в систему");
+        boolean isRole = userRolesFacade.isRole("MANAGER", user);
+        if(!isRole){
+            request.setAttribute("info", "У вас нет права для этого ресурса. Войдите в систему с соответствующими правами");
+            request.getRequestDispatcher("/showLoginForm").forward(request, response);
             return;
         }
-        
         String path = request.getServletPath();
         
         switch (path) {
             case "/addBook":
-                request.getRequestDispatcher("/WEB-INF/addBookForm.jsp").forward(request, response);
+                request.setAttribute("activeAddBook", "true");
+                List<Cover> listCovers = coverFacade.findAll();
+                request.setAttribute("listCovers", listCovers);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("addBook")).forward(request, response);
                 break;
             case "/createBook":
                 String name = request.getParameter("name");
                 String author = request.getParameter("author");
                 String publishedYear = request.getParameter("publishedYear");
+                String coverId = request.getParameter("coverId");
                 if("".equals(name) || name == null 
                         || "".equals(author) || author == null
-                        || "".equals(publishedYear) || publishedYear == null){
+                        || "".equals(publishedYear) || publishedYear == null
+                        || "".equals(coverId) || coverId == null){
                     request.setAttribute("info","Заполните все поля формы");
                     request.setAttribute("name",name);
                     request.setAttribute("author",author);
                     request.setAttribute("publishedYear",publishedYear);
-                    request.getRequestDispatcher("/WEB-INF/addBookForm.jsp").forward(request, response);
+                    request.setAttribute("coverId",coverId);
+                    request.getRequestDispatcher("/addBook").forward(request, response);
                     break; 
                 }
-                Book book = new Book(name, author, Integer.parseInt(publishedYear));
+                Cover cover = coverFacade.find(Long.parseLong(coverId));
+                Book book = new Book(name, author, Integer.parseInt(publishedYear), cover);
                 bookFacade.create(book);
                 request.setAttribute("info","Добавлена книга: " +book.toString() );
-                request.getRequestDispatcher("/index.jsp").forward(request, response);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("index")).forward(request, response);
                 break;
-                
-             case "/listReaders":
-                List<Reader> listReaders = readerFacade.findAll();
-                request.setAttribute("listReaders", listReaders);
-                request.getRequestDispatcher("/WEB-INF/listReaders.jsp").forward(request, response);
-                break;   
-                
+            case "/editBookForm":
+                request.setAttribute("activeEditBookForm", "true");
+                String bookId = request.getParameter("bookId");
+                book = bookFacade.find(Long.parseLong(bookId));
+                request.setAttribute("book", book);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("editBook")).forward(request, response);
+                break;
+            case "/editBook":
+                bookId = request.getParameter("bookId");
+                book = bookFacade.find(Long.parseLong(bookId));
+                name = request.getParameter("name");
+                author = request.getParameter("author");
+                publishedYear = request.getParameter("publishedYear");
+                if("".equals(name) || name == null 
+                        || "".equals(author) || author == null
+                        || "".equals(publishedYear) || publishedYear == null){
+                    request.setAttribute("info","Поля не должны быть пустыми");
+                    request.setAttribute("bookId", book.getId());
+                    request.getRequestDispatcher("/editBookForm").forward(request, response);
+                    break; 
+                }
+                book.setName(name);
+                book.setAuthor(author);
+                book.setPublishedYear(Integer.parseInt(publishedYear));
+                bookFacade.edit(book);
+                request.setAttribute("info","Книга отредактирована");
+                request.setAttribute("bookId", book.getId());
+                request.getRequestDispatcher("/editBookForm").forward(request, response);
+                break;
+            case "/uploadForm":
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("upload")).forward(request, response);
+                break;
+            
         }
     }
 

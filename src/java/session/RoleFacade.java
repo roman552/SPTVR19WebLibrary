@@ -5,17 +5,17 @@
  */
 package session;
 
-import entity.Book;
+import entity.Role;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 /**
  *
- * @author user
+ * @author jvm
  */
 @Stateless
-public class BookFacade extends AbstractFacade<Book> {
+public class RoleFacade extends AbstractFacade<Role> {
 
     @PersistenceContext(unitName = "SPTVR19WebLibraryPU")
     private EntityManager em;
@@ -25,8 +25,18 @@ public class BookFacade extends AbstractFacade<Book> {
         return em;
     }
 
-    public BookFacade() {
-        super(Book.class);
+    public RoleFacade() {
+        super(Role.class);
+    }
+
+    public Role findByName(String roleName) {
+        try {
+            return (Role) em.createQuery("SELECT role FROM Role role WHERE role.roleName = :roleName")
+                    .setParameter("roleName", roleName)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
     }
     
 }

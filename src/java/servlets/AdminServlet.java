@@ -5,13 +5,13 @@
  */
 package servlets;
 
-import entity.Book;
-import entity.History;
 import entity.Reader;
+import entity.Role;
 import entity.User;
 import java.io.IOException;
-import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -22,21 +22,21 @@ import javax.servlet.http.HttpSession;
 import session.BookFacade;
 import session.HistoryFacade;
 import session.ReaderFacade;
+import session.RoleFacade;
 import session.UserFacade;
 import session.UserRolesFacade;
 
 /**
  *
- * @author user
+ * @author jvm
  */
-@WebServlet(name = "UserServlet", urlPatterns = {
-    
-    "/takeOnBookForm",
-    "/takeOnBook",
-    "/returnBookForm",
-    "/returnBook",
+@WebServlet(name = "AdminServlet", urlPatterns = {
+    "/listReaders",
+    "/adminPanel",
+    "/setRoleToUser",
+
 })
-public class UserServlet extends HttpServlet {
+public class AdminServlet extends HttpServlet {
     @EJB 
     private BookFacade bookFacade;
     @EJB 
@@ -46,7 +46,7 @@ public class UserServlet extends HttpServlet {
     @EJB
     private UserFacade userFacade;
     @EJB private UserRolesFacade userRolesFacade;
-
+    @EJB private RoleFacade roleFacade;
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -72,7 +72,7 @@ public class UserServlet extends HttpServlet {
             request.getRequestDispatcher("/showLoginForm").forward(request, response);
             return;
         }
-        boolean isRole = userRolesFacade.isRole("READER", user);
+        boolean isRole = userRolesFacade.isRole("ADMIN", user);
         if(!isRole){
             request.setAttribute("info", "У вас нет права для этого ресурса. Войдите в систему с соответствующими правами");
             request.getRequestDispatcher("/showLoginForm").forward(request, response);
@@ -81,40 +81,44 @@ public class UserServlet extends HttpServlet {
         String path = request.getServletPath();
         
         switch (path) {
-            case "/takeOnBookForm":
-                request.setAttribute("activeTakeOnBookForm", "true");
-                List<Book> listBooks = bookFacade.findAll();
-                request.setAttribute("listBooks", listBooks);
-                List<Book> listReadBooks = historyFacade.findReadBook(user.getReader());
-                request.setAttribute("listReadBooks", listReadBooks);
-                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("takeOnBook")).forward(request, response);
+            case "/listReaders":
+                request.setAttribute("listReaders", "true");
+                List<Reader> listReaders = readerFacade.findAll();
+                request.setAttribute("listReaders", listReaders);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("listReaders")).forward(request, response);
                 break;
-            case "/takeOnBook":
-                String bookId = request.getParameter("bookId");
-                Book book = bookFacade.find(Long.parseLong(bookId));
-                Reader reader = user.getReader();
-                History history = new History(book, reader, new GregorianCalendar().getTime(), null);
-                historyFacade.create(history);
-                request.setAttribute("info","Добавлена выдана");
-                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("index")).forward(request, response);
-                break;
-            case "/returnBookForm":
-                List<History> listHistoriesWithReadBook = historyFacade.findHistoriesWithReadBook(user.getReader());
-                request.setAttribute("listHistoriesWithReadBook", listHistoriesWithReadBook);
-                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("returnBook")).forward(request, response);
-                break;
-            case "/returnBook":
-                String historyId = request.getParameter("historyId");
-                if("".equals(historyId) || historyId == null || historyId == "-1"){
-                    request.setAttribute("info", "Выберите книгу");
-                    request.getRequestDispatcher("/returnBookForm").forward(request, response);
-                    break;
+            case "/adminPanel":
+                request.setAttribute("adminPanel", "true");
+                List<Role> listRoles = roleFacade.findAll();
+                request.setAttribute("listRoles", listRoles);
+                List<User> listUsers = userFacade.findAll();
+                Map<User,List<Role>> usersMap = new HashMap<>();
+                for(User u : listUsers){
+                    usersMap.put(u, userRolesFacade.getRolesForUser(u));
                 }
-                history = historyFacade.find(Long.parseLong(historyId));
-                history.setReturnDate(new GregorianCalendar().getTime());
-                historyFacade.edit(history);
-                request.setAttribute("info","Добавлена возвращена");
-                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("index")).forward(request, response);
+                request.setAttribute("usersMap", usersMap);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("adminPanel")).forward(request, response);
+                break;
+            case "/setRoleToUser":
+                String roleId = request.getParameter("roleId");
+                String userId = request.getParameter("userId");
+                String changeRole = request.getParameter("changeRole");
+                if("".equals(roleId) || roleId == null
+                        || "".equals(userId) || userId == null){
+                    request.setAttribute("roleId", roleId);
+                    request.setAttribute("userId", userId);
+                    request.setAttribute("info", "Выберите все поля");
+                    request.getRequestDispatcher("/adminPanel").forward(request, response);
+                }
+                Role r = roleFacade.find(Long.parseLong(roleId));
+                User u = userFacade.find(Long.parseLong(userId));
+                if("0".equals(changeRole)){
+                    userRolesFacade.setRoleToUser(r,u);
+                }else if("1".equals(changeRole)){
+                    userRolesFacade.removeRoleFromUser(r,u);
+                }
+                request.setAttribute("info", "Роль назначена");
+                request.getRequestDispatcher("/adminPanel").forward(request, response);
                 break;
         }
     }
